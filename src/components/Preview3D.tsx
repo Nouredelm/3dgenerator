@@ -3,12 +3,13 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Grid, Stage, PerspectiveCamera, Environment, ContactShadows, Center } from '@react-three/drei';
 import * as THREE from 'three';
 import { STLExporter } from 'three-stdlib';
-import { Download } from 'lucide-react';
+import { Download, Box } from 'lucide-react';
 import { PreviewObject } from '../types';
 
 interface PreviewProps {
   objects: PreviewObject[];
   title?: string;
+  scadCode?: string;
 }
 
 const ModelObject: React.FC<{ object: PreviewObject }> = ({ object }) => {
@@ -25,8 +26,9 @@ const ModelObject: React.FC<{ object: PreviewObject }> = ({ object }) => {
   );
 };
 
-export const Preview3D: React.FC<PreviewProps> = ({ objects, title = 'model' }) => {
+export const Preview3D: React.FC<PreviewProps> = ({ objects, title = 'model', scadCode }) => {
   const modelGroupRef = useRef<THREE.Group>(null);
+  const [isConverting, setIsConverting] = React.useState(false);
 
   const exportSTL = () => {
     if (!modelGroupRef.current) return;
@@ -47,6 +49,36 @@ export const Preview3D: React.FC<PreviewProps> = ({ objects, title = 'model' }) 
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     }, 100);
+  };
+
+  const exportFullSCAD = async () => {
+    if (!scadCode) return;
+    setIsConverting(true);
+    try {
+      const response = await fetch('/api/convert-to-stl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scadCode, title }),
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${title.toLowerCase().replace(/\s+/g, '_')}_full.stl`;
+        link.click();
+        URL.revokeObjectURL(url);
+      } else {
+        const data = await response.json();
+        alert(data.message || data.error || "Failed to convert SCAD to STL");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error connecting to conversion service");
+    } finally {
+      setIsConverting(false);
+    }
   };
 
   return (
@@ -84,13 +116,28 @@ export const Preview3D: React.FC<PreviewProps> = ({ objects, title = 'model' }) 
       </Suspense>
 
       {objects.length > 0 && (
-        <button
-          onClick={exportSTL}
-          className="absolute bottom-4 right-4 bg-slate-800/80 hover:bg-indigo-600 text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-all border border-slate-700 hover:border-indigo-400 backdrop-blur-sm opacity-0 group-hover/view:opacity-100 shadow-xl"
-          title="Export current preview as STL"
-        >
-          <Download size={14} /> Export Preview STL
-        </button>
+        <div className="absolute bottom-4 right-4 flex gap-2">
+          <button
+            onClick={exportFullSCAD}
+            disabled={isConverting}
+            className="bg-indigo-600/90 hover:bg-indigo-500 text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-all border border-indigo-400/30 backdrop-blur-sm opacity-0 group-hover/view:opacity-100 shadow-xl disabled:opacity-50"
+            title="Convert full SCAD script to STL (Server-side)"
+          >
+            {isConverting ? (
+              <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Box size={14} />
+            )}
+            Export Full STL
+          </button>
+          <button
+            onClick={exportSTL}
+            className="bg-slate-800/80 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-all border border-slate-700 hover:border-slate-600 backdrop-blur-sm opacity-0 group-hover/view:opacity-100 shadow-xl"
+            title="Export current preview as STL (Quick)"
+          >
+            <Download size={14} /> Preview STL
+          </button>
+        </div>
       )}
       
       {objects.length === 0 && (
