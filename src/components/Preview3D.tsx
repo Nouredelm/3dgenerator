@@ -29,16 +29,18 @@ export const Preview3D: React.FC<PreviewProps> = ({ objects }) => {
           Initializing 3D Space...
         </div>
       }>
-        <Canvas shadows camera={{ position: [20, 20, 20], fov: 45 }}>
+        <Canvas shadows camera={{ position: [30, -30, 30], fov: 45, up: [0, 0, 1] }}>
           <color attach="background" args={['#0f172a']} />
-          <Stage environment="city" intensity={0.5} shadows={{ type: 'contact', opacity: 0.4, blur: 2 }} adjustCamera>
+          <Stage environment="city" intensity={0.5} shadows={{ type: 'contact', opacity: 0.4, blur: 2 }} adjustCamera={false}>
              <Center>
-                {objects.map((obj, i) => (
-                  <ModelObject key={i} object={obj} />
-                ))}
+                <group rotation={[0, 0, 0]}>
+                  {objects.map((obj, i) => (
+                    <ModelObject key={i} object={obj} />
+                  ))}
+                </group>
              </Center>
           </Stage>
-          <OrbitControls makeDefault minPolarAngle={0} maxPolarAngle={Math.PI / 1.75} />
+          <OrbitControls makeDefault />
           <Grid 
             infiniteGrid 
             fadeDistance={100} 
@@ -48,7 +50,8 @@ export const Preview3D: React.FC<PreviewProps> = ({ objects }) => {
             cellThickness={0.5} 
             cellColor="#334155" 
             sectionColor="#475569"
-            position={[0, -0.01, 0]}
+            rotation={[Math.PI / 2, 0, 0]}
+            position={[0, 0, -0.01]}
           />
         </Canvas>
       </Suspense>

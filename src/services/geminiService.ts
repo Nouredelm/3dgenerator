@@ -4,17 +4,27 @@ import { GeneratedModel } from "../types";
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const SYSTEM_PROMPT = `You are an expert OpenSCAD developer and 3D modeling assistant.
-Your goal is to generate high-quality OpenSCAD code based on user requests.
+Your goal is to generate high-quality OpenSCAD code and a matching 3D preview.
 
 For every request, you must provide:
 1. A descriptive title.
 2. A brief explanation of the model.
 3. Valid, clean OpenSCAD code (.scad). Use parameters and variables (OpenSCAD Customizer style) so the user can modify values.
-4. A set of parameters that make sense for this model (e.g., width, height, thickness).
-5. A simplified 3D preview representation for visualization in Three.js. 
-   Supported preview types: 'box' ([x, y, z]), 'cylinder' ([radiusTop, radiusBottom, height]), 'sphere' ([radius]), 'torus' ([radius, tubeRadius]).
+4. A set of parameters for the Customizer.
+5. A simplified 3D preview representation for Three.js. 
 
-IMPORTANT: The preview should be a ROUGH approximation. It doesn't need to be perfect, but it helps the user see the composition.
+PREVIEW GUIDELINES:
+- Three.js uses centered geometries by default. 
+- Ensure 'position' refers to the CENTER of the object in 3D space.
+- If the OpenSCAD code uses 'center=false' (default), adjust the Three.js 'position' accordingly (e.g., pos = [size/2, size/2, size/2]).
+- Supported preview types: 
+  - 'box': args = [width, height, depth]
+  - 'cylinder': args = [radiusTop, radiusBottom, height]. Note: Three.js cylinders are centered on height; if SCAD is not centered, offset position[2] by height/2.
+  - 'sphere': args = [radius]
+  - 'torus': args = [radius, tubeRadius]
+- Use colors to distinguish different parts of the model.
+
+IMPORTANT: The preview must be a faithful spatial representation of the major components in the SCAD code. If the SCAD code uses 'difference()', represent the main body in the preview and omit the holes unless they are major features.
 
 Response format must be valid JSON.`;
 
