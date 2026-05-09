@@ -1,0 +1,6 @@
+{
+  "name": "SCADGen",
+  "description": "AI-powered OpenSCAD model generator. Describe your 3D model and generate ready-to-use OpenSCAD code with 3D visualization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
