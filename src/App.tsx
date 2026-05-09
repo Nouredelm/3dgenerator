@@ -270,7 +270,7 @@ export default function App() {
                       exit={{ opacity: 0, y: -10 }}
                       className="h-full"
                     >
-                      {model && <Preview3D objects={model.preview} />}
+                      {model && <Preview3D objects={model.preview} title={model.title} />}
                     </motion.div>
                   ) : (
                     <motion.div
